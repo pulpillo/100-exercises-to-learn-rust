@@ -10,23 +10,39 @@ pub struct Ticket {
 }
 
 impl Ticket {
-    pub fn new(title: String, description: String, status: String) -> Ticket {
+    
+    fn validate_title(title: String) -> String {
         if title.is_empty() {
             panic!("Title cannot be empty");
         }
         if title.len() > 50 {
             panic!("Title cannot be longer than 50 bytes");
         }
+        title
+    }
+    
+    fn validate_description(description: String) -> String {
         if description.is_empty() {
             panic!("Description cannot be empty");
         }
         if description.len() > 500 {
             panic!("Description cannot be longer than 500 bytes");
         }
+        description
+    }
+    
+    fn validate_status(status: String) -> String {
         if status != "To-Do" && status != "In Progress" && status != "Done" {
             panic!("Only `To-Do`, `In Progress`, and `Done` statuses are allowed");
         }
-
+        status  
+    }
+    
+    pub fn new(title: String, description: String, status: String) -> Ticket {
+        let title : String = Ticket::validate_title(title);
+        let description : String = Ticket::validate_description(description);
+        let status : String = Ticket::validate_status(status);
+        
         Ticket {
             title,
             description,
@@ -45,6 +61,22 @@ impl Ticket {
     pub fn status(&self) -> &String {
         &self.status
     }
+    
+    pub fn set_title(&mut self, new_title : String){
+        let valid_title : String = Ticket::validate_title(new_title);
+        self.title = valid_title;
+    }
+    
+    pub fn set_description(&mut self, new_description : String){
+        let valid_description = Ticket::validate_description(new_description);
+        self.description = valid_description;
+    }
+    
+    pub fn set_status(&mut self, new_status : String){
+        let valid_status = Ticket::validate_status(new_status);
+        self.status = valid_status;
+    }
+    
 }
 
 #[cfg(test)]
