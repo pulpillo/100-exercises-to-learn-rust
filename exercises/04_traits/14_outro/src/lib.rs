@@ -37,6 +37,12 @@ use std::ops::Add;
         }
     }
     
+    impl PartialEq<u16> for SaturatingU16 {
+        fn eq(&self, other: &u16) -> bool {
+            self.value == *other
+        }
+    }
+    
     impl From<u8> for SaturatingU16{
         fn from(value: u8) -> Self {
             SaturatingU16{
@@ -58,7 +64,7 @@ use std::ops::Add;
         
         fn add(self, rhs: Self) -> Self {
             Self {
-                value: self.value + rhs.value
+                value: self.value.saturating_add(rhs.value)
             }
         }
     }
@@ -68,7 +74,7 @@ use std::ops::Add;
         
         fn add(self, rhs: u8) -> Self {
             Self {
-                value: self.value + rhs as u16
+                value: self.value.saturating_add(rhs as u16)
             }
         }
     }
@@ -78,7 +84,7 @@ use std::ops::Add;
         
         fn add(self, rhs: u16) -> Self {
             Self {
-                value: self.value + rhs
+                value: self.value.saturating_add(rhs)
             }
         }
     }
@@ -88,7 +94,7 @@ use std::ops::Add;
         
         fn add(self, rhs: &SaturatingU16) -> Self {
             Self {
-                value: self.value + rhs.value
+                value: self.value.saturating_add(rhs.value)
             }
         }
     }
