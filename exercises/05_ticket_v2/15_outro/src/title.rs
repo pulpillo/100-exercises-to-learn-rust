@@ -1,8 +1,67 @@
-// TODO: Implement `TryFrom<String>` and `TryFrom<&str>` for the `TicketTitle` type,
-//   enforcing that the title is not empty and is not longer than 50 bytes.
-//   Implement the traits required to make the tests pass too.
+use std::fmt;
+use std::error::Error;
 
+#[derive(Debug,Clone,PartialEq)]
 pub struct TicketTitle(String);
+
+#[derive(Debug, PartialEq)]
+pub enum TicketTitleError {
+    Empty,
+    TooLong {
+        max_length: usize,
+    },
+}
+
+impl fmt::Display for TicketTitleError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TicketTitleError::Empty => write!(f, "The title cannot be empty"),
+            TicketTitleError::TooLong { max_length } => {
+                write!(
+                    f,
+                    "The title cannot be longer than {} bytes",
+                    max_length
+                )
+            }
+        }
+    }
+}
+
+impl Error for TicketTitleError {}
+
+
+impl TicketTitle {
+    
+    const MAX_LENGTH: usize = 50;
+
+    fn validate(value: &str) -> Result<TicketTitle, TicketTitleError> {
+        if value.is_empty() {
+            return Err(TicketTitleError::Empty);
+        }
+        if value.len() > Self::MAX_LENGTH {
+            return Err(TicketTitleError::TooLong {
+                max_length: Self::MAX_LENGTH,
+            });
+        }
+        Ok(TicketTitle(value.to_string()))
+    }
+}
+
+impl TryFrom<String> for TicketTitle {
+    type Error = TicketTitleError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        TicketTitle::validate(&value)
+    }
+}
+
+impl TryFrom<&str> for TicketTitle {
+    type Error = TicketTitleError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        TicketTitle::validate(value)
+    }
+}
 
 #[cfg(test)]
 mod tests {

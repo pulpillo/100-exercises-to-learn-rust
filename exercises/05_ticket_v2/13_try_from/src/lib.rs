@@ -8,6 +8,48 @@ enum Status {
     Done,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum InvalidStatusError {
+    UnknownStatus(String),
+}
+
+impl std::fmt::Display for InvalidStatusError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InvalidStatusError::UnknownStatus(s) => write!(f, "Unknown status: '{}'", s),
+        }
+    }
+}
+
+impl std::error::Error for InvalidStatusError {}
+
+impl TryFrom<String> for Status {
+    
+    type Error = InvalidStatusError;
+    
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.to_uppercase().as_str() {
+            "TODO" => Ok(Status::ToDo),
+            "INPROGRESS" => Ok(Status::InProgress),
+            "DONE" => Ok(Status::Done),
+            _ =>  Err(InvalidStatusError::UnknownStatus(value))
+        }
+    }
+}
+
+impl TryFrom<&str> for Status {
+    type Error = InvalidStatusError;
+    
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_uppercase().as_str() {
+            "TODO" => Ok(Status::ToDo),
+            "INPROGRESS" => Ok(Status::InProgress),
+            "DONE" => Ok(Status::Done),
+            _ => Err(InvalidStatusError::UnknownStatus(value.to_string()))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
