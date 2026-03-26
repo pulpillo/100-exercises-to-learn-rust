@@ -1,5 +1,6 @@
-use std::sync::{Arc, RwLock};
+
 use std::thread::spawn;
+use std::sync::{Arc,RwLock};
 
 use ticket_fields::test_helpers::{ticket_description, ticket_title};
 use without_channels::data::TicketDraft;
@@ -7,7 +8,7 @@ use without_channels::store::TicketStore;
 
 #[test]
 fn works() {
-    let store = todo!();
+    let store = Arc::new(RwLock::new(TicketStore::new()));
 
     let store1 = store.clone();
     let client1 = spawn(move || {
@@ -30,11 +31,9 @@ fn works() {
     let ticket_id1 = client1.join().unwrap();
     let ticket_id2 = client2.join().unwrap();
 
-    let reader = store.read().unwrap();
-
-    let ticket1 = reader.get(ticket_id1).unwrap();
+    let ticket1 = store.read().unwrap().get(ticket_id1).unwrap();
     assert_eq!(ticket_id1, ticket1.read().unwrap().id);
 
-    let ticket2 = reader.get(ticket_id2).unwrap();
+    let ticket2 = store.read().unwrap().get(ticket_id2).unwrap();
     assert_eq!(ticket_id2, ticket2.read().unwrap().id);
 }
