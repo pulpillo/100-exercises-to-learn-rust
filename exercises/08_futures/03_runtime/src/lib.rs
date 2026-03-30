@@ -4,13 +4,55 @@
 use std::fmt::Display;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
+use anyhow::Context;
+use std::io::Write;
+use std::sync::Arc;
 
 pub async fn fixed_reply<T>(first: TcpListener, second: TcpListener, reply: T)
 where
     // `T` cannot be cloned. How do you share it between the two server tasks?
     T: Display + Send + Sync + 'static,
 {
-    todo!()
+    let mut buffer = Vec::new();
+        write!(&mut buffer, "{}", reply).context("Failed to format reply data");
+        
+        let shared_data = Arc::new(buffer);
+        let data_for_first = shared_data.clone();
+        let data_for_second = shared_data.clone();
+    
+        let first_handler = tokio::spawn(async move {
+            run_echo_loop(first, data_for_first).await
+        });
+    
+        let second_handler = tokio::spawn(async move {
+            run_echo_loop(second, data_for_second).await
+        });
+    
+        tokio::select! {
+            res = first_handler => res.context("First listener task failed."),
+            res = second_handler => res.context("Second listener task failed."),
+        };
+    
+        ()
+}
+
+async fn run_echo_loop(listener: TcpListener, data : Arc<Vec<u8>>) -> Result<(), anyhow::Error> {
+    
+    loop {
+            match listener.accept().await {
+                Ok((mut socket, _addr)) => {
+                    let data_to_send = data.clone();
+                    
+                    tokio::spawn(async move {
+                        let (_, mut writer) = socket.split();
+                        if let Err(e) = writer.write_all(&data_to_send).await {
+                            eprintln!("Error sending response: {}", e);
+                        }
+                    });
+                },
+                Err(e) => return Err(anyhow::anyhow!("Error accepting connection: {}", e)),
+            }
+        }
 }
 
 #[cfg(test)]

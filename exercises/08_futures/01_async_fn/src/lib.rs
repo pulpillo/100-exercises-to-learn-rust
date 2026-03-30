@@ -1,4 +1,5 @@
 use tokio::net::TcpListener;
+use anyhow::Context;
 
 // TODO: write an echo server that accepts incoming TCP connections and
 //  echoes the received data back to the client.
@@ -11,7 +12,22 @@ use tokio::net::TcpListener;
 // - `tokio::net::TcpStream::split` to obtain a reader and a writer from the socket
 // - `tokio::io::copy` to copy data from the reader to the writer
 pub async fn echo(listener: TcpListener) -> Result<(), anyhow::Error> {
-    todo!()
+    loop{
+        match listener.accept().await {
+               Ok((mut socket, _addr)) => {
+                   tokio::spawn(async move {
+                       let (mut reader,mut writer) = socket.split();
+                       if let Err(e) = tokio::io::copy(&mut reader, &mut writer)
+                                               .await
+                                               .context("Error copying data inside spawned task") 
+                                           {
+                                               eprintln!("Worker error: {:?}", e);
+                                           }
+                    });
+               },
+               Err(e) => return Err(anyhow::anyhow!("Error accepting connexion: {}", e)),
+           }
+    }  
 }
 
 #[cfg(test)]

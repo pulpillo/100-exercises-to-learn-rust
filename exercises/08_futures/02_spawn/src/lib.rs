@@ -1,10 +1,43 @@
 use tokio::net::TcpListener;
+use anyhow::Context;
 
 // TODO: write an echo server that accepts TCP connections on two listeners, concurrently.
 //  Multiple connections (on the same listeners) should be processed concurrently.
 //  The received data should be echoed back to the client.
 pub async fn echoes(first: TcpListener, second: TcpListener) -> Result<(), anyhow::Error> {
-    todo!()
+
+        
+        let first_handler = tokio::spawn(async move {
+                run_echo(first).await
+            });
+        
+        let second_handler = tokio::spawn(async move {
+                run_echo(second).await
+            });
+        
+        tokio::select! {
+                res = first_handler => res.context("Tarea del primer listener falló")??,
+                res = second_handler => res.context("Tarea del segundo listener falló")??,
+            };
+        
+        Ok(())
+}
+
+async fn run_echo(listener: TcpListener) -> Result<(), anyhow::Error> {
+    loop{
+        match listener.accept().await {
+               Ok((mut socket, _addr)) => {
+                       let (mut reader,mut writer) = socket.split();
+                       if let Err(e) = tokio::io::copy(&mut reader, &mut writer)
+                                               .await
+                                               .context("Error copying data inside spawned task") 
+                                           {
+                                               eprintln!("Worker error: {:?}", e);
+                                           }
+               },
+               Err(e) => return Err(anyhow::anyhow!("Error accepting connexion: {}", e)),
+           }
+    }  
 }
 
 #[cfg(test)]
